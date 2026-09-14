@@ -1509,6 +1509,33 @@
         }
       ]
     },
+    "python_span": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_start"
+          },
+          "named": true,
+          "value": "python_span_delimiter"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "python_inline_code"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_close"
+          },
+          "named": true,
+          "value": "python_span_delimiter"
+        }
+      ]
+    },
     "latex_block": {
       "type": "SEQ",
       "members": [
@@ -4572,6 +4599,10 @@
               "name": "code_span"
             },
             {
+              "type": "SYMBOL",
+              "name": "python_span"
+            },
+            {
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
@@ -6261,6 +6292,18 @@
     {
       "type": "SYMBOL",
       "name": "_unclosed_span"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_python_span_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "python_inline_code"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_python_span_close"
     }
   ],
   "inline": [],

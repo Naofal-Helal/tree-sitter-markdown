@@ -25,4 +25,4 @@
   (#set! injection.language "toml"))
 
 ((inline) @injection.content
-  (#set! injection.language "markdown_inline"))
+  (#set! injection.language "dyno_inline"))

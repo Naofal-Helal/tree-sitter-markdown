@@ -99,6 +99,10 @@
           "named": true
         },
         {
+          "type": "python_span",
+          "named": true
+        },
+        {
           "type": "shortcut_link",
           "named": true
         },
@@ -234,6 +238,10 @@
           "named": true
         },
         {
+          "type": "python_span",
+          "named": true
+        },
+        {
           "type": "shortcut_link",
           "named": true
         },
@@ -311,6 +319,10 @@
         },
         {
           "type": "numeric_character_reference",
+          "named": true
+        },
+        {
+          "type": "python_span",
           "named": true
         },
         {
@@ -469,6 +481,10 @@
           "named": true
         },
         {
+          "type": "python_span",
+          "named": true
+        },
+        {
           "type": "strikethrough",
           "named": true
         },
@@ -501,6 +517,25 @@
         },
         {
           "type": "numeric_character_reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "python_span",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "python_inline_code",
+          "named": true
+        },
+        {
+          "type": "python_span_delimiter",
           "named": true
         }
       ]
@@ -586,6 +621,10 @@
           "named": true
         },
         {
+          "type": "python_span",
+          "named": true
+        },
+        {
           "type": "shortcut_link",
           "named": true
         },
@@ -666,6 +705,10 @@
         },
         {
           "type": "numeric_character_reference",
+          "named": true
+        },
+        {
+          "type": "python_span",
           "named": true
         },
         {
@@ -845,6 +888,14 @@
   },
   {
     "type": "numeric_character_reference",
+    "named": true
+  },
+  {
+    "type": "python_inline_code",
+    "named": true
+  },
+  {
+    "type": "python_span_delimiter",
     "named": true
   },
   {

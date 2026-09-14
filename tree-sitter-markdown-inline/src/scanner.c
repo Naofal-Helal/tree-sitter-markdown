@@ -1,4 +1,5 @@
 #include "tree_sitter/parser.h"
+#include <stdint.h>
 
 #ifdef _MSC_VER
 #define UNUSED __pragma(warning(suppress : 4101))
@@ -22,7 +23,10 @@ typedef enum {
     STRIKETHROUGH_CLOSE,
     LATEX_SPAN_START,
     LATEX_SPAN_CLOSE,
-    UNCLOSED_SPAN
+    UNCLOSED_SPAN,
+    PYTHON_SPAN_START,
+    PYTHON_SPAN_CODE,
+    PYTHON_SPAN_CLOSE,
 } TokenType;
 
 // Determines if a character is punctuation as defined by the markdown spec.
@@ -63,7 +67,7 @@ typedef struct {
     // The number of characters remaining in the currrent emphasis delimiter
     // run.
     uint8_t num_emphasis_delimiters_left;
-
+    uint64_t python_span_end;
 } Scanner;
 
 // Write the whole state of a Scanner to a byte buffer
@@ -73,6 +77,10 @@ static unsigned serialize(Scanner *s, char *buffer) {
     buffer[size++] = (char)s->code_span_delimiter_length;
     buffer[size++] = (char)s->latex_span_delimiter_length;
     buffer[size++] = (char)s->num_emphasis_delimiters_left;
+    buffer[size++] = (char)(s->python_span_end >> 0);
+    buffer[size++] = (char)(s->python_span_end >> 8);
+    buffer[size++] = (char)(s->python_span_end >> 16);
+    buffer[size++] = (char)(s->python_span_end >> 24);
     return size;
 }
 
@@ -83,12 +91,17 @@ static void deserialize(Scanner *s, const char *buffer, unsigned length) {
     s->code_span_delimiter_length = 0;
     s->latex_span_delimiter_length = 0;
     s->num_emphasis_delimiters_left = 0;
+    s->python_span_end = 0;
     if (length > 0) {
         size_t size = 0;
         s->state = (uint8_t)buffer[size++];
         s->code_span_delimiter_length = (uint8_t)buffer[size++];
         s->latex_span_delimiter_length = (uint8_t)buffer[size++];
         s->num_emphasis_delimiters_left = (uint8_t)buffer[size++];
+        s->python_span_end |= (uint64_t)buffer[size++] << 0;
+        s->python_span_end |= (uint64_t)buffer[size++] << 8;
+        s->python_span_end |= (uint64_t)buffer[size++] << 16;
+        s->python_span_end |= (uint64_t)buffer[size++] << 24;
     }
 }
 
@@ -141,6 +154,54 @@ static bool parse_backtick(Scanner *s, TSLexer *lexer,
     return parse_leaf_delimiter(lexer, &s->code_span_delimiter_length,
                                 valid_symbols, '`', CODE_SPAN_START,
                                 CODE_SPAN_CLOSE);
+}
+
+static bool parse_python_start(Scanner *s, TSLexer *lexer,
+                           const bool *valid_symbols) {
+    lexer->advance(lexer, false);
+    if (lexer->lookahead == '}') return false;
+    lexer->mark_end(lexer);
+    size_t level = 1;
+    size_t offset = 1;
+    while (!lexer->eof(lexer)) {
+        if (lexer->lookahead == '{') level++;
+        if (lexer->lookahead == '}') level--;
+        if (level == 0) break;
+        lexer->advance(lexer, false);
+        offset++;
+    }
+    if (level == 0 && valid_symbols[PYTHON_SPAN_START]) {
+        lexer->result_symbol = PYTHON_SPAN_START;
+        s->python_span_end = offset;
+        return true;
+    }
+    if (valid_symbols[UNCLOSED_SPAN]) {
+        lexer->result_symbol = UNCLOSED_SPAN;
+        s->python_span_end = 0;
+        return true;
+    }
+    return false;
+}
+
+static bool parse_python(Scanner *s, TSLexer *lexer,
+                           const bool *valid_symbols) {
+    if (s->python_span_end == 1) {
+        lexer->advance(lexer, false);
+        lexer->mark_end(lexer);
+        lexer->result_symbol = PYTHON_SPAN_CLOSE;
+        s->python_span_end = 0;
+        return true;
+    }
+    while (!lexer->eof(lexer) && s->python_span_end > 1) {
+        lexer->advance(lexer, false);
+        s->python_span_end--;
+    }
+    if (s->python_span_end == 1 && valid_symbols[PYTHON_SPAN_CODE]) {
+        lexer->mark_end(lexer);
+        lexer->result_symbol = PYTHON_SPAN_CODE;
+        return true;
+    }
+    return false;
 }
 
 static bool parse_dollar(Scanner *s, TSLexer *lexer,
@@ -344,6 +405,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         return error(lexer);
     }
 
+    if (s->python_span_end > 0) return parse_python(s, lexer, valid_symbols);
+
     // Decide which tokens to consider based on the first non-whitespace
     // character
     switch (lexer->lookahead) {
@@ -362,6 +425,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             return parse_underscore(s, lexer, valid_symbols);
         case '~':
             return parse_tilde(s, lexer, valid_symbols);
+        case '{':
+            return parse_python_start(s, lexer, valid_symbols);
     }
     return false;
 }

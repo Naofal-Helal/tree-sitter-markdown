@@ -54,3 +54,6 @@
 
 ; NOTE: extension not enabled by default
 ; (wiki_link ["[" "|" "]"] @punctuation.delimiter)
+
+
+(python_span_delimiter) @comment.muted

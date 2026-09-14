@@ -77,6 +77,7 @@ module.exports = grammar(add_inline_rules({
         [$._processing_instruction, $._text_base],
         [$._declaration, $._text_base],
         [$._cdata_section, $._text_base],
+        [$.python_span, $._text_base],
 
         [$._link_text_non_empty, $._inline_element],
         [$._link_text_non_empty, $._inline_element_no_star],
@@ -124,6 +125,13 @@ module.exports = grammar(add_inline_rules({
             repeat(choice($._text_base, '[', ']', $._soft_line_break, $._html_tag)),
             alias($._code_span_close, $.code_span_delimiter)
         ),
+
+        python_span: $ => seq(
+          '{', 
+          repeat1(choice($.python_span, $._non_brace_char)),
+          '}',
+        ),
+        _non_brace_char: $ => /[^{}]/,
 
         latex_block: $ => seq(
             alias($._latex_span_start, $.latex_span_delimiter),
@@ -357,6 +365,7 @@ module.exports = grammar(add_inline_rules({
             $.numeric_character_reference,
             (common.EXTENSION_LATEX ? $.latex_block : choice()),
             $.code_span,
+            $.python_span,
             alias($._html_tag, $.html_tag),
             $._text_base,
             common.EXTENSION_TAGS ? $.tag : choice(),

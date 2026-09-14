@@ -22,7 +22,9 @@ typedef enum {
     STRIKETHROUGH_CLOSE,
     LATEX_SPAN_START,
     LATEX_SPAN_CLOSE,
-    UNCLOSED_SPAN
+    UNCLOSED_SPAN,
+    PYTHON_SPAN_START,
+    PYTHON_SPAN_CLOSE,
 } TokenType;
 
 // Determines if a character is punctuation as defined by the markdown spec.
@@ -141,6 +143,25 @@ static bool parse_backtick(Scanner *s, TSLexer *lexer,
     return parse_leaf_delimiter(lexer, &s->code_span_delimiter_length,
                                 valid_symbols, '`', CODE_SPAN_START,
                                 CODE_SPAN_CLOSE);
+}
+
+static bool parse_curly_brackets(Scanner *s, TSLexer *lexer,
+                           const bool *valid_symbols) {
+    lexer->advance(lexer, false);
+    lexer->mark_end(lexer);
+    if (lexer->lookahead != '{' && valid_symbols[PYTHON_SPAN_START]) {
+        lexer->result_symbol = PYTHON_SPAN_START;
+        return true;
+    }
+    if (lexer->lookahead != '}' && valid_symbols[PYTHON_SPAN_CLOSE]) {
+        lexer->result_symbol = PYTHON_SPAN_CLOSE;
+        return true;
+    }
+    if (valid_symbols[UNCLOSED_SPAN]) {
+        lexer->result_symbol = UNCLOSED_SPAN;
+        return true;
+    }
+    return false;
 }
 
 static bool parse_dollar(Scanner *s, TSLexer *lexer,
@@ -362,6 +383,9 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
             return parse_underscore(s, lexer, valid_symbols);
         case '~':
             return parse_tilde(s, lexer, valid_symbols);
+        case '{':
+        case '}':
+            return parse_curly_brackets(s, lexer, valid_symbols);
     }
     return false;
 }

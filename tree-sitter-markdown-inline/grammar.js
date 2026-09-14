@@ -58,7 +58,10 @@ module.exports = grammar(add_inline_rules({
 
         // Token emmited when encountering opening delimiters for a leaf span
         // e.g. a code span, that does not have a matching closing span
-        $._unclosed_span
+        $._unclosed_span,
+
+        $._python_span_start,
+        $._python_span_close,
     ],
     precedences: $ => [
         // [$._strong_emphasis_star, $._inline_element_no_star],
@@ -77,7 +80,6 @@ module.exports = grammar(add_inline_rules({
         [$._processing_instruction, $._text_base],
         [$._declaration, $._text_base],
         [$._cdata_section, $._text_base],
-        [$.python_span, $._text_base],
 
         [$._link_text_non_empty, $._inline_element],
         [$._link_text_non_empty, $._inline_element_no_star],
@@ -126,11 +128,11 @@ module.exports = grammar(add_inline_rules({
             alias($._code_span_close, $.code_span_delimiter)
         ),
 
-        python_span: $ => seq(
-          '{', 
-          repeat1(choice($.python_span, $._non_brace_char)),
-          '}',
-        ),
+        python_span: $ => prec(10, seq(
+          alias($._python_span_start, $.python_span_delimiter),
+          alias(repeat1($._non_brace_char), $.python_inline_code),
+          alias($._python_span_close, $.python_span_delimiter),
+        )),
         _non_brace_char: $ => /[^{}]/,
 
         latex_block: $ => seq(

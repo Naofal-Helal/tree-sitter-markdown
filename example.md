@@ -1,6 +1,13 @@
 # Hello
 
+- `lorem` **ipsum**
+    - [lorem](ipsum)
+    - [ ] TODO: fix unclosed bracket
+    - {def fun(x): return 2 * x;} 
+
+
+
 ```
-def func():
-    return x * 2
+def f():
+    return 2 * x
 ```

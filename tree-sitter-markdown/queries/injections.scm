@@ -1,6 +1,9 @@
 (fenced_code_block
-  (info_string
-    (language) @injection.language)
+  [
+    (info_string
+      (language) @injection.language)
+    (#set! injection.language "python")
+  ]
   (code_fence_content) @injection.content)
 
 ((html_block) @injection.content

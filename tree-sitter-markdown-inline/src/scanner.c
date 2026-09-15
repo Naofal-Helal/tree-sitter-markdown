@@ -24,6 +24,7 @@ typedef enum {
     LATEX_SPAN_CLOSE,
     UNCLOSED_SPAN,
     PYTHON_SPAN_START,
+    PYTHON_SPAN_CODE,
     PYTHON_SPAN_CLOSE,
 } TokenType;
 
@@ -65,7 +66,7 @@ typedef struct {
     // The number of characters remaining in the currrent emphasis delimiter
     // run.
     uint8_t num_emphasis_delimiters_left;
-
+    uint64_t python_span_end;
 } Scanner;
 
 // Write the whole state of a Scanner to a byte buffer
@@ -75,6 +76,11 @@ static unsigned serialize(Scanner *s, char *buffer) {
     buffer[size++] = (char)s->code_span_delimiter_length;
     buffer[size++] = (char)s->latex_span_delimiter_length;
     buffer[size++] = (char)s->num_emphasis_delimiters_left;
+    uint64_t p = s->python_span_end;
+    buffer[size++] = (p >> 0) & 0xff;
+    buffer[size++] = (p >> 8) & 0xff;
+    buffer[size++] = (p >> 16) & 0xff;
+    buffer[size++] = (p >> 24) & 0xff;
     return size;
 }
 
@@ -85,12 +91,17 @@ static void deserialize(Scanner *s, const char *buffer, unsigned length) {
     s->code_span_delimiter_length = 0;
     s->latex_span_delimiter_length = 0;
     s->num_emphasis_delimiters_left = 0;
+    s->python_span_end = 0;
     if (length > 0) {
         size_t size = 0;
         s->state = (uint8_t)buffer[size++];
         s->code_span_delimiter_length = (uint8_t)buffer[size++];
         s->latex_span_delimiter_length = (uint8_t)buffer[size++];
         s->num_emphasis_delimiters_left = (uint8_t)buffer[size++];
+        s->python_span_end |= (uint64_t)buffer[size++] << 0;
+        s->python_span_end |= (uint64_t)buffer[size++] << 8;
+        s->python_span_end |= (uint64_t)buffer[size++] << 16;
+        s->python_span_end |= (uint64_t)buffer[size++] << 24;
     }
 }
 
@@ -145,20 +156,36 @@ static bool parse_backtick(Scanner *s, TSLexer *lexer,
                                 CODE_SPAN_CLOSE);
 }
 
-static bool parse_curly_brackets(Scanner *s, TSLexer *lexer,
+static bool parse_start_python(Scanner *s, TSLexer *lexer,
                            const bool *valid_symbols) {
     lexer->advance(lexer, false);
     lexer->mark_end(lexer);
-    if (lexer->lookahead != '{' && valid_symbols[PYTHON_SPAN_START]) {
+    size_t offset = 1;
+    size_t level = 1;
+    while (!lexer->eof(lexer)) {
+        if (lexer->lookahead == '{') level++;
+        if (lexer->lookahead == '}') level--;
+        if (level == 0) break;
+        lexer->advance(lexer, true);
+        offset++;
+    }
+    if (level == 0 && valid_symbols[PYTHON_SPAN_START]) {
         lexer->result_symbol = PYTHON_SPAN_START;
+        s->python_span_end = offset; 
         return true;
     }
-    if (lexer->lookahead != '}' && valid_symbols[PYTHON_SPAN_CLOSE]) {
-        lexer->result_symbol = PYTHON_SPAN_CLOSE;
-        return true;
+    return false;
+}
+
+static bool parse_python(Scanner *s, TSLexer *lexer,
+                           const bool *valid_symbols) {
+    while (!lexer->eof(lexer) && s->python_span_end > 1) {
+        lexer->advance(lexer, false);
+        s->python_span_end--;
     }
-    if (valid_symbols[UNCLOSED_SPAN]) {
-        lexer->result_symbol = UNCLOSED_SPAN;
+    lexer->mark_end(lexer);
+    if (s->python_span_end == 1 && valid_symbols[PYTHON_SPAN_CODE]) {
+        lexer->result_symbol = PYTHON_SPAN_CODE;
         return true;
     }
     return false;
@@ -365,6 +392,8 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         return error(lexer);
     }
 
+    if (s->python_span_end > 1) return parse_python(s, lexer, valid_symbols);
+
     // Decide which tokens to consider based on the first non-whitespace
     // character
     switch (lexer->lookahead) {
@@ -384,8 +413,15 @@ static bool scan(Scanner *s, TSLexer *lexer, const bool *valid_symbols) {
         case '~':
             return parse_tilde(s, lexer, valid_symbols);
         case '{':
+            return parse_start_python(s, lexer, valid_symbols);
         case '}':
-            return parse_curly_brackets(s, lexer, valid_symbols);
+            if (s->python_span_end == 1 && valid_symbols[PYTHON_SPAN_CLOSE]) {
+                lexer->advance(lexer, false);
+                lexer->result_symbol = PYTHON_SPAN_START;
+                s->python_span_end = 0;
+                return true;
+            }
+            return false;
     }
     return false;
 }

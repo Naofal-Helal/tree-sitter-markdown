@@ -525,7 +525,25 @@
   {
     "type": "python_inline_code",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "python_inline_code",
+          "named": true
+        },
+        {
+          "type": "python_span",
+          "named": true
+        },
+        {
+          "type": "python_span_delimiter",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "python_span",

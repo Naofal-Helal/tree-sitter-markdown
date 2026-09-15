@@ -61,6 +61,7 @@ module.exports = grammar(add_inline_rules({
         $._unclosed_span,
 
         $._python_span_start,
+        $._python_span_code,
         $._python_span_close,
     ],
     precedences: $ => [
@@ -128,12 +129,11 @@ module.exports = grammar(add_inline_rules({
             alias($._code_span_close, $.code_span_delimiter)
         ),
 
-        python_span: $ => prec(10, seq(
+        python_span: $ => seq(
           alias($._python_span_start, $.python_span_delimiter),
-          alias(repeat1($._non_brace_char), $.python_inline_code),
+          alias($._python_span_code, $.python_inline_code),
           alias($._python_span_close, $.python_span_delimiter),
-        )),
-        _non_brace_char: $ => /[^{}]/,
+        ),
 
         latex_block: $ => seq(
             alias($._latex_span_start, $.latex_span_delimiter),

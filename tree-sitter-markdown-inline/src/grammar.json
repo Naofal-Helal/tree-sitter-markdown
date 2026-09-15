@@ -1510,43 +1510,92 @@
       ]
     },
     "python_span": {
-      "type": "PREC",
-      "value": 10,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_python_span_start"
-            },
-            "named": true,
-            "value": "python_span_delimiter"
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_start"
           },
-          {
-            "type": "ALIAS",
+          "named": true,
+          "value": "python_span_delimiter"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "REPEAT1",
             "content": {
-              "type": "REPEAT1",
-              "content": {
-                "type": "SYMBOL",
-                "name": "_non_brace_char"
-              }
-            },
-            "named": true,
-            "value": "python_inline_code"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_non_brace_char"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_bracket_span"
+                }
+              ]
+            }
           },
-          {
-            "type": "ALIAS",
+          "named": true,
+          "value": "python_inline_code"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_close"
+          },
+          "named": true,
+          "value": "python_span_delimiter"
+        }
+      ]
+    },
+    "_bracket_span": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_start"
+          },
+          "named": true,
+          "value": "python_span_delimiter"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "REPEAT1",
             "content": {
-              "type": "SYMBOL",
-              "name": "_python_span_close"
-            },
-            "named": true,
-            "value": "python_span_delimiter"
-          }
-        ]
-      }
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_non_brace_char"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "python_span"
+                }
+              ]
+            }
+          },
+          "named": true,
+          "value": "python_inline_code"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_python_span_close"
+          },
+          "named": true,
+          "value": "python_span_delimiter"
+        }
+      ]
     },
     "_non_brace_char": {
       "type": "PATTERN",
@@ -6312,6 +6361,10 @@
     {
       "type": "SYMBOL",
       "name": "_python_span_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_python_span_code"
     },
     {
       "type": "SYMBOL",

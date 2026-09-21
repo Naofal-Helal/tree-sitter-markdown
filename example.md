@@ -1,6 +1,6 @@
 # Hello
 
-- `lorem` **ipsum**
+- `lorem` _ipsum_ **dolor**
     - [lorem](ipsum)
     - [ ] TODO: fix unclosed bracket
     - {def fun(x): print({"hello": 123}) ;return 2 * x;} 

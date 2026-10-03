@@ -116,7 +116,7 @@
 [
   (block_continuation)
   (block_quote_marker)
-] @punctuation.special
+] @comment.muted
 
 (backslash_escape) @string.escape
 
